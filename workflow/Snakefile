@@ -1,0 +1,64 @@
+import os
+import traceback
+import textwrap
+import yaml
+from tokenize import TokenError
+from snakemake.logging import logger
+
+
+SAMPLES = ["SRR22866584","SRR22866601"]
+
+configfile : "config/config.yaml"
+clean_reads = config["clean_reads"]
+quant = config["quant"]
+
+
+
+rule all:
+    input:
+        expand("quant/{sample}/run_info.json", sample = SAMPLES),
+        expand("quant/{sample}/abundance.tsv", sample = SAMPLES),
+        expand("quant/{sample}/abundance.h5", sample = SAMPLES)
+
+
+rule index:
+    input:
+        "/home/centos/pipe/rnaseq2/bulk-rnaseq-preproc/genome/Homo_sapiens.GRCh38.cdna.all.fa"        
+    output:
+        "/home/centos/pipe/rnaseq2/bulk-rnaseq-preproc/genome/Homo_sapiens.GRCh38.cdna.all.fa.idx"
+    threads: 20
+    conda:
+        "envs/kallisto.yaml"
+    shell:
+        "kallisto index -i {output} {input} "
+        
+rule fastp:
+    input:
+        "/home/centos/pipe/rnaseq2/bulk-rnaseq-preproc/data/{sample}_1.fastq",
+        "/home/centos/pipe/rnaseq2/bulk-rnaseq-preproc/data/{sample}_2.fastq"
+    output:
+        "{clean_reads}/{sample}_1.clean.fastq",
+        "{clean_reads}/{sample}_2.clean.fastq"
+    conda:
+        "envs/fastp.yaml"
+    shell:
+        "fastp -i {input[0]} -I {input[1]} -o {output[0]} -O {output[1]}"
+       
+
+rule quantify:
+    input:
+        "/home/centos/pipe/rnaseq2/bulk-rnaseq-preproc/genome/Homo_sapiens.GRCh38.cdna.all.fa.idx",
+        "clean_reads/{sample}_1.clean.fastq",
+        "clean_reads/{sample}_2.clean.fastq"
+    output:
+        "quant/{sample}/run_info.json",
+        "quant/{sample}/abundance.tsv",
+        "quant/{sample}/abundance.h5"
+    conda:
+        "envs/kallisto.yaml"
+    shell:
+        "kallisto quant -i {input[0]} -o quant/{wildcards.sample} {input[1]} {input[2]} -b 20 -t 6  --rf-stranded"
+        
+ 
+        
+        
