@@ -8,7 +8,7 @@ The very basic compenent is the Snakefile in the workflow directory, define the 
 
 
 ####################
-.
+<.
 ├── config
 │   ├── config.yaml
 │   └── config.ymal.bak
@@ -16,5 +16,5 @@ The very basic compenent is the Snakefile in the workflow directory, define the 
     ├── envs
     │   ├── fastp.yaml
     │   └── kallisto.yaml
-    └── Snakefile
+    └── Snakefile >
 ###########################
